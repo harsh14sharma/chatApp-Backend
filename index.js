@@ -19,7 +19,14 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-const PORT = 8080;
+// Use environment variable for Mongo URI
+const mongoose = require('mongoose');
+
+// Use environment variable for PORT
+const PORT = process.env.PORT || 8080;
+
+mongoose.connect('mongodb+srv://mohitkeshari2000:mohit123@chat-app.l5erv.mongodb.net/?retryWrites=true&w=majority&appName=Chat-App');
+
 
 app.get("/", (req,res)=>{
     res.send("Hello World");
