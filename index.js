@@ -1,43 +1,54 @@
 const express = require('express');
-const cors= require('cors');
-require('dotenv').config();
-const connectDb= require('./config/connectDb');
-const router= require('./router/index.js');
+const cors = require('cors');
+const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-const{app,server} = require('./socket/index.js');
+require('dotenv').config();
 
+const connectDb = require('./config/connectDb');
+const router = require('./router/index.js');
+const { app, server } = require('./socket/index.js');
 
-//  const app = express();
+// Define allowed origins
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://chat-app-front-end-netlify.netlify.app',
+];
+
+// Configure CORS with dynamic origin check
 app.use(cors({
-    origin:process.env.FRONTENED_URL,
-    credentials:true
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
 }));
-
-/**    socket is running at http://localhost:8080/        */
-
 
 app.use(express.json());
 app.use(cookieParser());
 
-// Use environment variable for Mongo URI
-const mongoose = require('mongoose');
+// MongoDB connection using environment variable for Mongo URI
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log("Connected to MongoDB"))
+.catch((error) => console.error("MongoDB connection error:", error));
 
-// Use environment variable for PORT
-const PORT = process.env.PORT || 8080;
-
-mongoose.connect('mongodb+srv://mohitkeshari2000:mohit123@chat-app.l5erv.mongodb.net/?retryWrites=true&w=majority&appName=Chat-App');
-
-
-app.get("/", (req,res)=>{
+// Home route
+app.get("/", (req, res) => {
     res.send("Hello World");
-})
+});
 
-//api end point 
-app.use("/api",router);
+// API endpoint
+app.use("/api", router);
 
-connectDb().then(()=>{
-    server.listen(PORT,()=>{
-        console.log("connected to DB");
-        console.log(`Server is running on port ${PORT}`);
-    })
-})
+// Connect to the database and start the server
+connectDb().then(() => {
+    server.listen(process.env.PORT || 8080, () => {
+        console.log("Connected to DB");
+        console.log(`Server is running on port ${process.env.PORT || 8080}`);
+    });
+});
