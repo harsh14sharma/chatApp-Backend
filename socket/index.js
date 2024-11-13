@@ -1,4 +1,4 @@
-import { io } from 'socket.io-client';  
+ 
 
 const express = require('express');
 const { Server } = require('socket.io');
@@ -30,10 +30,6 @@ const io = new Server(server, {
   pingTimeout: 60000,   // Timeout in ms before considering the connection dead
 });
 
-const socket = io('wss://chatapp-backend-4tzk.onrender.com', {
-    transports: ['websocket'], // Ensure using WebSocket transport
-    withCredentials: true,      // Optional, if using cookies or auth headers
-  });
 
 const onlineUser = new Set();
 
