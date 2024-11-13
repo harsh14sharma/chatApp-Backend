@@ -28,10 +28,6 @@ const io = new Server(server, {
 //   pingTimeout: 60000,   // Timeout in ms before considering the connection dead
 });
 
-server.listen(3000, () => {
-  console.log('listening on *:3000');
-});
-
 const onlineUser = new Set();
 
 io.on('connection', (socket) => {
