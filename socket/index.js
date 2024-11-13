@@ -9,22 +9,23 @@ const getConversation = require('../helper/getConversation');
 const app = express();
 const server = http.createServer(app);
 
+// Initialize socket.io with CORS and authentication support
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL, // The frontend URL
+    origin: ['https://chat-app-front-end-netlify.netlify.app', 'http://localhost:5173'], // The frontend URL (ensure this is set correctly)
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
-    credentials: true,
+    credentials: true, // Allow cookies
   },
-  // pingInterval: 25000, // Ping interval in ms (uncomment if needed)
-  // pingTimeout: 60000, // Timeout in ms before considering the connection dead (uncomment if needed)
 });
 
-const onlineUser = new Set();
+const onlineUser = new Set(); // Track online users
 
+// WebSocket connection handler
 io.on('connection', (socket) => {
-  console.log('User connected', socket.id);
+  console.log('User connected:', socket.id);
 
+  // Get token from the handshake auth
   const token = socket.handshake.auth.token;
   if (!token) {
     socket.emit('error', 'Authentication token is required');
@@ -32,7 +33,7 @@ io.on('connection', (socket) => {
     return;
   }
 
-  // Get user details from token
+  // Authenticate user with the token
   getUserDetailsFromToken(token)
     .then(async (user) => {
       if (!user) {
@@ -42,12 +43,15 @@ io.on('connection', (socket) => {
       }
 
       console.log('Authenticated user:', user);
-      socket.join(user._id.toString()); // Join a room based on user ID
+
+      // Join a room based on the user ID
+      socket.join(user._id.toString());
       onlineUser.add(user._id.toString());
 
-      io.emit('onlineUser', Array.from(onlineUser)); // Broadcast the list of online users
+      // Emit the online users list to all clients
+      io.emit('onlineUser', Array.from(onlineUser));
 
-      // Handle 'message-page' event to get previous conversations
+      // Handle 'message-page' event to get previous conversations for a user
       socket.on('message-page', async (userId) => {
         try {
           const userDetails = await UserModel.findById(userId).select('-password');
@@ -145,7 +149,7 @@ io.on('connection', (socket) => {
         }
       });
 
-      // Handle 'sidebar' event to get the sidebar conversations
+      // Handle 'sidebar' event to get sidebar conversations
       socket.on('sidebar', async (currentUserId) => {
         try {
           const conversation = await getConversation(currentUserId);
@@ -184,12 +188,13 @@ io.on('connection', (socket) => {
         }
       });
 
-      // Handle disconnect event
+      // Handle user disconnection
       socket.on('disconnect', () => {
         onlineUser.delete(user._id.toString());
         io.emit('onlineUser', Array.from(onlineUser)); // Broadcast updated online users list
-        console.log('User disconnected', socket.id);
+        console.log('User disconnected:', socket.id);
       });
+
     })
     .catch((err) => {
       console.error('Error during authentication:', err);
