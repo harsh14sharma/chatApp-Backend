@@ -16,7 +16,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true, // Allow cookies
-  },
+    pingTimeout: 60000, // 30 seconds
+    pingInterval: 25000, // 25 seconds
+},
 });
 
 const onlineUser = new Set(); // Track online users
