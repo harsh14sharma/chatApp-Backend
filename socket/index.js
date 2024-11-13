@@ -1,5 +1,3 @@
- 
-
 const express = require('express');
 const { Server } = require('socket.io');
 const http = require('http');
@@ -26,10 +24,13 @@ const io = new Server(server, {
     credentials: true,
     
   },
-  pingInterval: 25000,  // Ping interval in ms
-  pingTimeout: 60000,   // Timeout in ms before considering the connection dead
+//   pingInterval: 25000,  // Ping interval in ms
+//   pingTimeout: 60000,   // Timeout in ms before considering the connection dead
 });
 
+server.listen(3000, () => {
+  console.log('listening on *:3000');
+});
 
 const onlineUser = new Set();
 
