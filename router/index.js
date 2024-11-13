@@ -6,8 +6,8 @@ const userDetail = require('../controller/userDetail');
 const logout = require('../controller/logout');
 const updateUserDetails = require('../controller/updateUserDetails');
 const searchUser = require('../controller/searchUser');
-const getConversation = require('../services/getConversation');
-const getUserDetailsFromToken = require('../services/getUserDetailsFromToken');
+const getConversation = require('../helper/getConversation');
+const getUserDetailsFromToken = require('../helper/getUserDetailsFromToken');
 
 const router = express.Router();
 
