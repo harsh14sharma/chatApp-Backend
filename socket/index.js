@@ -9,12 +9,29 @@ const getConversation = require('../helper/getConversation');
 const app = express();
 const server = http.createServer(app);
 
+// const io = new Server(server, {
+//   cors: {
+//     origin: process.env.FRONTENED_URL,
+//     credentials: true,
+//   },
+// });
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTENED_URL,
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
     credentials: true,
+    
   },
+  pingInterval: 25000,  // Ping interval in ms
+  pingTimeout: 60000,   // Timeout in ms before considering the connection dead
 });
+
+const socket = io('wss://chatapp-backend-4tzk.onrender.com', {
+    transports: ['websocket'], // Ensure using WebSocket transport
+    withCredentials: true,      // Optional, if using cookies or auth headers
+  });
 
 const onlineUser = new Set();
 
