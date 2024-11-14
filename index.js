@@ -6,8 +6,9 @@ const router = require('./router/index.js');
 const cookieParser = require('cookie-parser');
 const { app, server } = require('./socket/index.js');
 
+// Use CORS middleware with allowed origin and credentials
 app.use(cors({
-  origin: process.env.FRONTENED_URL,
+  origin: process.env.FRONTENED_URL, // should match your frontend URL
   credentials: true
 }));
 

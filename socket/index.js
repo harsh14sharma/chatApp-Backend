@@ -8,12 +8,12 @@ const { ConversationModel } = require('../models/ConversationModel');
 
 // Initialize Express and HTTP server
 const app = express();
-const server = http.createServer(app); // Define `app` here
+const server = http.createServer(app);
 
 // Configure CORS and Socket.io
 const io = new Server(server, {
     cors: {
-        origin: ['https://your-deployed-frontend.netlify.app', 'http://localhost:5173'],
+        origin: [process.env.FRONTENED_URL, 'http://localhost:5173'],
         methods: ['GET', 'POST'],
         credentials: true
     },
@@ -21,7 +21,7 @@ const io = new Server(server, {
     pingInterval: 25000
 });
 
-const onlineUsers = new Set();
+const onlineUsers = new Map(); // Store user details with ID
 
 // Middleware to verify WebSocket authentication
 io.use(async (socket, next) => {
@@ -43,11 +43,10 @@ io.use(async (socket, next) => {
 // Handle WebSocket connection
 io.on('connection', (socket) => {
     const userId = socket.user._id.toString();
-    onlineUsers.add(userId);
-    socket.join(userId);
+    onlineUsers.set(userId, { _id: socket.user._id, name: socket.user.name });
 
     // Notify all clients of online users
-    io.emit('onlineUser', Array.from(onlineUsers));
+    io.emit('onlineUser', Array.from(onlineUsers.values()));
 
     // Handle "message-page" event
     socket.on('message-page', async (otherUserId) => {
@@ -75,8 +74,8 @@ io.on('connection', (socket) => {
 
     // Handle disconnection
     socket.on('disconnect', () => {
-        onlineUsers.delete(userId);
-        io.emit('onlineUser', Array.from(onlineUsers));
+        onlineUsers.delete(userId); // Remove user from online list
+        io.emit('onlineUser', Array.from(onlineUsers.values())); // Notify all clients
     });
 });
 
