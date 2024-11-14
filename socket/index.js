@@ -1,11 +1,16 @@
+// Import dependencies
+const express = require('express');
 const { Server } = require('socket.io');
 const http = require('http');
 const UserModel = require('../models/UserModel');
 const getUserDetailsFromToken = require('../helper/getUserDetailsFromToken');
-const { ConversationModel, MessageModel } = require('../models/ConversationModel');
+const { ConversationModel } = require('../models/ConversationModel');
 
-const server = http.createServer(app);
+// Initialize Express and HTTP server
+const app = express();
+const server = http.createServer(app); // Define `app` here
 
+// Configure CORS and Socket.io
 const io = new Server(server, {
     cors: {
         origin: ['https://your-deployed-frontend.netlify.app', 'http://localhost:5173'],
@@ -18,6 +23,7 @@ const io = new Server(server, {
 
 const onlineUsers = new Set();
 
+// Middleware to verify WebSocket authentication
 io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
@@ -27,13 +33,14 @@ io.use(async (socket, next) => {
     try {
         const user = await getUserDetailsFromToken(token);
         if (!user) return next(new Error('Invalid token'));
-        socket.user = user;
+        socket.user = user; // Store user information in the socket
         next();
     } catch (err) {
         next(new Error('Authentication error'));
     }
 });
 
+// Handle WebSocket connection
 io.on('connection', (socket) => {
     const userId = socket.user._id.toString();
     onlineUsers.add(userId);
@@ -42,10 +49,10 @@ io.on('connection', (socket) => {
     // Notify all clients of online users
     io.emit('onlineUser', Array.from(onlineUsers));
 
-    socket.on('message-page', async (userId) => {
+    // Handle "message-page" event
+    socket.on('message-page', async (otherUserId) => {
         try {
-            // Fetch messages and send them back
-            const userDetails = await UserModel.findById(userId).select('-password');
+            const userDetails = await UserModel.findById(otherUserId).select('-password');
             if (!userDetails) return socket.emit('error', 'User not found');
             
             const payload = { _id: userDetails._id, name: userDetails.name, email: userDetails.email };
@@ -53,7 +60,10 @@ io.on('connection', (socket) => {
 
             // Fetch previous messages and emit to client
             const conversation = await ConversationModel.findOne({
-                "$or": [{ sender: socket.user._id, receiver: userId }, { sender: userId, receiver: socket.user._id }]
+                "$or": [
+                    { sender: socket.user._id, receiver: otherUserId },
+                    { sender: otherUserId, receiver: socket.user._id }
+                ]
             }).populate('messages').sort({ updatedAt: -1 });
 
             socket.emit('message', conversation?.messages || []);
@@ -63,10 +73,25 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Handle disconnection
     socket.on('disconnect', () => {
         onlineUsers.delete(userId);
         io.emit('onlineUser', Array.from(onlineUsers));
     });
 });
 
+// Define a basic route for health check (optional)
+app.get('/', (req, res) => {
+    res.send("Socket server is running");
+});
+
+// Export both app and server
 module.exports = { app, server };
+
+// Start the server if this file is run directly
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`Server listening on port ${PORT}`);
+    });
+}
