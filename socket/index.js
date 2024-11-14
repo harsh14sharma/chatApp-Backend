@@ -13,7 +13,7 @@ const server = http.createServer(app);
 // Configure CORS and Socket.io
 const io = new Server(server, {
     cors: {
-        origin: [process.env.FRONTENED_URL, 'http://localhost:5173'],
+        origin: [process.env.FRONTENED_URL, 'http://localhost:5173'], // Add localhost for dev
         methods: ['GET', 'POST'],
         credentials: true
     },
@@ -43,7 +43,7 @@ io.use(async (socket, next) => {
 // Handle WebSocket connection
 io.on('connection', (socket) => {
     const userId = socket.user._id.toString();
-    onlineUsers.set(userId, { _id: socket.user._id, name: socket.user.name });
+    onlineUsers.set(userId, { _id: socket.user._id, name: socket.user.name, status: 'online' });
 
     // Notify all clients of online users
     io.emit('onlineUser', Array.from(onlineUsers.values()));

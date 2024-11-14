@@ -8,7 +8,7 @@ const { app, server } = require('./socket/index.js');
 
 // Use CORS middleware with allowed origin and credentials
 app.use(cors({
-  origin: process.env.FRONTENED_URL, // should match your frontend URL
+  origin: process.env.FRONTENED_URL, // Ensure this matches your deployed frontend URL
   credentials: true
 }));
 
